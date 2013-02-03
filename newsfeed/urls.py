@@ -5,5 +5,5 @@ from django.conf.urls.defaults import patterns, include
 # admin.autodiscover()
 
 urlpatterns = patterns('',
-	(r'^newsfeed/', include('newsfeed.urls')),
+	(r'^newsfeed/', include('newsfeedapp.urls')),
 )
