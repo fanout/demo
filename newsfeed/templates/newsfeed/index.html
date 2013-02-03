@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <script src="http://use.edgefonts.net/source-sans-pro.js"></script>
+
+        <style type="text/css">
+
+            body {
+                font-family: source-sans-pro, sans-serif;
+                font-size: 14px;
+                font-style: normal;
+                font-weight: 400;
+
+                width: 400px; /* hack */
+            }
+
+            a {
+                text-decoration: none;
+            }
+
+            #container {
+                border: 1px solid #ccc;
+                border-radius: 6px;
+                padding: 4px 5px;
+            }
+
+            .entry {
+                padding: 4px 5px;
+                border-radius: 4px;
+                border-top: 1px dotted #ccc;
+            }
+
+            .entry:first-child {
+                border-top: none;
+            }
+
+            a .entry:hover {
+                background: rgb(255, 248, 206);
+            }
+
+            .title {
+                color: rgb(30, 144, 255);
+                font-weight: 900;
+                font-style: normal;
+                font-size: 18px;
+            }
+
+            .date {
+                font-weight: 900;
+                font-style: normal;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                padding: 0px 4px;
+                margin-right: 4px;
+                color: white;
+                background: #bbb;
+                border-radius: 4px;
+                text-shadow: 1px 1px 2px #888;
+            }
+
+            .body {
+                font-size: 14px;
+                color: #444;
+            }
+
+        </style>
+
+        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+        <script type="text/javascript" src="/static/json2.js"></script>
+        <script type="text/javascript" src="/static/polldance-1.0.0.js"></script>
+
+        <script>
+            function format_date(datestr) {
+                var d = new Date(datestr);
+                var h = d.getHours();
+                var suffix;
+                if (h > 12) {
+                    h -= 12;
+                    suffix = "pm";
+                } else {
+                    suffix = "am";
+                }
+
+                var m = d.getMinutes();
+                if (m < 10) {
+                    m = "0" + m;
+                } else {
+                    m = "" + m;
+                }
+
+                return h + ":" + m + " " + suffix;
+            }
+
+            function item_html(i) {
+                var out = "";
+
+                if (i.link) {
+                    out += "<a href=\"" +  i.link + "\">";
+                }
+
+                out += "<div class=\"entry\">\n";
+                out += "<div class=\"title\">" + i.title + "</div>\n";
+                out += "<div class=\"body\">\n";
+                out += "<span class=\"date\">" + format_date(i.date) + "</span>\n";
+                out += i.summary;
+                out += "</div>\n";
+                out += "</div>";
+                if (i.link) {
+                    out += "</a>\n";
+                }
+
+                return out;
+            }
+
+            var feed = {{ feed|safe }};
+            var last_id = {{ last_id|safe }};
+
+            function start() {
+                var req = new PollDance.Request();
+                req.maxTries = -1;
+                req.recurring = true;
+                req.on("finished", function(code, result) {
+                    if (result.prev_id && result.prev_id != last_id) {
+                        // we missed a push, re-poll to correct
+                        return;
+                    }
+
+                    if (!result.items || result.items.length < 1) {
+                        return;
+                    }
+
+                    for (var i = 0; i < result.items.length; ++i) {
+                        $("#container").prepend(item_html(result.items[i]));
+                    }
+
+                    last_id = result.items[result.items.length - 1].id;
+                });
+                req.start("GET", function() {
+                    if (last_id) {
+                        return "/newsfeed/items/?feed=" + feed + "&max=50&since=id:" + last_id;
+                    } else {
+                        return "/newsfeed/items/?feed=" + feed + "&max=50";
+                    }
+                });
+            }
+        </script>
+    </head>
+    <body onload="start();">
+
+        <p>News Feed Example</p>
+        <p>API:</p>
+        <p>Add post: POST /newsfeed/add/ (params <em>feed=1</em>, <em>title</em>, <em>summary</em>, and <em>link</em> (optional))</p>
+        <p>Fetch posts: GET /newsfeed/items/ (params <em>feed=1</em>, <em>since=id:{id}</em>, <em>max</em>)</p>
+
+        <div id="container">
+
+            {% for i in items %}
+            {% if i.link %}<a href="{{ i.link }}">{% endif %}<div class="entry">
+                <div class="title">{{ i.title }}</div>
+                <div class="body">
+                    <span class="date">{{ i.date }}</span>
+                    {{ i.summary }}
+                </div>
+            </div>{% if i.link %}</a>{% endif %}
+            {% endfor %}
+
+        </div>
+
+    </body>
+</html>
