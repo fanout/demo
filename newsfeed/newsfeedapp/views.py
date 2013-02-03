@@ -10,7 +10,7 @@ from models import NewsFeed, NewsItem
 import fanout
 
 def fanout_publish(channel, id, prev_id, http_response):
-	fanout.publish(settings.FANOUT_REALM, b64decode(settings.FANOUT_REALM_KEY), channel, id prev_id, http_response)
+	fanout.publish(settings.FANOUT_REALM, b64decode(settings.FANOUT_REALM_KEY), channel, id, prev_id, http_response)
 
 def format_date(d):
 	h = d.time().hour
@@ -195,7 +195,7 @@ def add(request):
 		try:
 			prev_items = NewsItem.objects.filter(feed=feed, id__lt=item.id).order_by("-id")[:1]
 			if len(prev_items) > 0:
-				prev_id = prev_items[0].id)
+				prev_id = prev_items[0].id
 		except:
 			prev_id = None
 
