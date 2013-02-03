@@ -1,0 +1,13 @@
+defaults: &defaults
+  fanout:
+    realm: <realm>
+    realm_key: <realm_key>
+
+development:
+  <<: *defaults
+
+test:
+  <<: *defaults
+
+production:
+  <<: *defaults
