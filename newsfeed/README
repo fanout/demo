@@ -2,7 +2,7 @@ NewsFeed
 --------
 
 News Feed widget in Django. The main project is a Django App in the
-subdirectory "newsfeed". The base directory is a simple Django Project to
+subdirectory "newsfeedapp". The base directory is a simple Django Project to
 encapsulate this one app. The only thing the app cares about is that you have
 the fields FANOUT_REALM and FANOUT_REALM_KEY defined in the settings.py file.
 
