@@ -1,0 +1,58 @@
+// Place all the styles related to the admin controller here.
+// They will automatically be included in application.css.
+// You can use Sass (SCSS) here: http://sass-lang.com/
+
+.gc-scoreboard {
+    width: 260px;
+
+    .gc-scores {
+        position: relative;
+
+        .gc-team {
+            position: relative;
+            width: 110px;
+
+            .gc-increase {
+                font-size: 16px;
+                height: 22px;
+                position: absolute;
+                right: 0;
+                top: 15px;
+            }
+            .gc-score {
+                color: #666;
+                font-size: 35px;
+                font-weight: bold;
+                position: absolute;
+                right: 36px;
+                top: 7px;
+            }
+
+            &.gc-away-team {
+                float: left;
+            }
+            &.gc-home-team {
+                margin-left: 150px;
+
+                img {
+                    position: absolute;
+                    right: 0;
+                }
+                .gc-increase {
+                    left: 0;
+                    right: auto;
+                }
+                .gc-score {
+                    left: 36px;
+                    right: auto;
+                }
+            }
+        }
+    }
+    .gc-meta {
+        clear: both;
+    }
+}
+.gc-content {
+    clear: both;
+}
