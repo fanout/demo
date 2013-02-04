@@ -1,0 +1,163 @@
+<html>
+	<head>
+		<title>Fanout.io Canvas Line Drawing Demo</title>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+		<script src="http://cdn.techpines.io/jquery.event.drag-2.0.js"></script>
+		<script src="http://demo.fanout.io/pubsub/static/json2.js"></script>
+		<script src="http://demo.fanout.io/pubsub/static/pubsub.js"></script>
+		<script src="libs.js" type="text/javascript"></script><!--GUID/QueryString -->
+		<script>
+			var channel = null; // Randomly unique to pass around the channel name
+
+			// Fanout instance variable
+			var fanout = null;
+
+			// Only one work in progress line at a time
+			active_line = { start_x: -1, start_y: -1, end_x: -1, end_y: -1 }
+
+			// Handle dragstart, drag, and dragend Function
+			function handleDrag(data) {
+				// Clear the overlay canvas
+				overlay_ctx.clearRect(0, 0, 320, 200);
+
+				if(data.type == "dragstart") {
+					// Start the line
+					overlay_ctx.beginPath()
+					overlay_ctx.strokeStyle = "red";
+					overlay_ctx.moveTo(data.x, data.y)
+					// Make a note of the start
+					active_line.start_x = data.x;
+					active_line.start_y = data.y;
+				}
+				else if(data.type == "drag") {
+					// Draw the line as if here was the end point
+					overlay_ctx.beginPath()
+					overlay_ctx.strokeStyle = "red";
+					overlay_ctx.moveTo(active_line.start_x, active_line.start_y)
+					overlay_ctx.lineTo(data.x, data.y)
+					overlay_ctx.stroke()
+				}
+				else {
+					overlay_ctx.stroke()
+					overlay_ctx.closePath()
+					// Draw the official line and send it to Fanout
+					active_line.end_x = data.x;
+					active_line.end_y = data.y;
+					drawLine(active_line);
+					sendToFanout(active_line);
+
+					// Clear the overlay until the next work in progress line
+					overlay_ctx.clearRect(0, 0, 320, 200);
+				}
+			}
+
+			/* Draw a line segment on the main canvas
+					data = {start_x, start_y, end_x, end_y}
+					Any color you want so long as it's black.
+			*/
+			function drawLine(data) {
+					canvas_ctx.beginPath();
+					canvas_ctx.strokeStyle = "black";
+					canvas_ctx.moveTo(data.start_x, data.start_y);
+					canvas_ctx.lineTo(data.end_x, data.end_y);
+					canvas_ctx.stroke();
+					canvas_ctx.closePath();
+			}
+
+			/* Handle fanout state changes
+				Currently only using "subscribed" to start the canvas
+			*/
+			onFanOutState = function(state) {
+				if(state.type && state.type == "subscribed") {
+					// Handle click and drag drawing
+					$(function() {
+						canvas_ctx = $('#canvas')[0].getContext("2d");
+						overlay_ctx = $('#overlay')[0].getContext("2d");
+						$('canvas').live('drag dragstart dragend', function(e) {
+							offset = $(this).offset();
+							data = {
+								x: (e.clientX - offset.left),
+								y: (e.clientY - offset.top),
+								type: e.handleObj.type
+							}
+							// Show work in progress line and send when completed
+							handleDrag(data);
+						})
+					})
+				}
+			}
+
+			function sendToFanout(data) {
+				var data = {
+					"items": [
+						{
+							"fpp": data
+						}
+					]
+				};
+				$.ajax({
+					url: 'post.php?channel=' + channel,
+					type: "POST",
+					data: {'data': JSON.stringify(data)},
+					success: function(data) {
+						send_lock = false;
+						//console.log("send response:");
+						//console.dir(data);
+					}
+				});
+			}
+
+			// Generate a UUID and connect to fanout
+			function setup() {
+				if($('#setup').length != 0) {
+					// Activate the iframe and share link
+					$('#frm').attr("src", "index.html?channel=" + channel);
+					$('#status').html("Access URL: <input size='85' type='text' value='" + document.location.href + "?channel=" + channel + "'>");
+				}
+
+				// Connect to Fanout and set up the handlers
+				var fanout = new FO.Connection('demo.fanout.io').Channel(channel);
+				fanout.on('state-changed', onFanOutState);
+				fanout.on('data', drawLine);
+			}
+
+			// Disable the setup button if we already have a UUID
+			function checkForUUID() {
+				if(QueryString.channel) {
+					// This is not the main demo page, so immediately start Fanout and the canvas
+					channel = QueryString.channel;
+					$("body").html('<canvas id="canvas" width="320px" height="200px" style="position: absolute; margin: 0 auto; border: 1px solid red"></canvas><canvas id="overlay" width="320px" height="200px" style="position: absolute; margin: 0 auto; border: 1px solid red"></canvas>');
+					setup();
+				}
+				else {
+					// This is the main demo page; wait for the Start button
+					channel = "+" + GUID();
+				}
+			}
+			-->
+		</script>
+	</head>
+	<body onload="checkForUUID()" style="margin: 0; padding 0">
+		<h1>Fanout.io Canvas Line Drawing Demo</h1>
+		<table border="1">
+			<tr valign="top">
+				<td colspan="2" id="status">
+					<input id="setup" type="button" onClick="setup()" value="Click here to start drawing below">
+				</td>
+			</tr>
+			<tr valign="top">
+				<th>local</th>
+				<th>iframe</th>
+			</tr>
+			<tr valign="top">
+				<td style="width: 320px">
+					<canvas id="canvas" width="320px" height="200px" style="position: absolute; margin: 0 auto; border: 1px solid red"></canvas>
+					<canvas id="overlay" width="320px" height="200px" style="position: absolute; margin: 0 auto; border: 1px solid red"></canvas>
+				</td>
+				<td>
+					<iframe id="frm" src="loading.html" height="202px" width="322px"></iframe>
+				</td>
+			</tr>
+		</table>
+	</body>
+</html>
