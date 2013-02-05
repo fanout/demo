@@ -116,7 +116,7 @@
 				}
 
 				// Connect to Fanout and set up the handlers
-				var fanout = new FO.Connection('demo.fanout.io').Channel(channel);
+				fanout = new FO.Connection('demo.fanout.io').Channel(channel);
 				fanout.on('state-changed', onFanOutState);
 				fanout.on('data', drawLine);
 			}
