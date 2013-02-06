@@ -157,7 +157,7 @@ def items_json(request):
 			instruct["hold"] = hold
 			instruct["response"] = response
 
-			return HttpResponse(json.dumps(instruct), content_type="application/fo-instruct")
+			return HttpResponse(json.dumps(instruct), content_type="application/grip-instruct")
 	else:
 		return HttpResponseNotAllowed(["GET"])
 
